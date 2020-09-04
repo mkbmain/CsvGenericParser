@@ -6,7 +6,7 @@ namespace tobin
 {
     public static class Extensions
     {
-        public static string Sanitize(this string value)
+        public static string SanitizeNumbers(this string value)
         {
             if (value.Contains(",") == false || value.ToCharArray().Count(f => f == ',') > 1)
             {

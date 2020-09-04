@@ -10,15 +10,25 @@ namespace tobin.CsvBasicModelGenericImporter
 {
     public class CsvBasicModelGenericImporter
     {
-        public static Task<IEnumerable<T>> ImportData<T>(string filePath, string[] mappedItems, char seperator = ',', bool smartCsvSplit = true) where T : new()
+        public static async Task<IEnumerable<T>> ImportData<T>(Stream stream, string[] mappedItems, char seperator = ',', bool changeEuNumbersToUk = true,
+            bool smartCsvSplit = true,
+            Encoding encoding = null)
+            where T : new()
         {
-            return ImportData<T>(File.Open(filePath, FileMode.Open), mappedItems, seperator, smartCsvSplit);
+            var list = new List<T>();
+            await foreach (var item in ImportDataAsyncEnumerable<T>(stream, mappedItems, seperator, changeEuNumbersToUk, smartCsvSplit, encoding))
+            {
+                list.Add(item);
+            }
+
+            return list;
         }
 
-        public static async Task<IEnumerable<T>> ImportData<T>(Stream stream, string[] mappedItems, char seperator = ',', bool smartCsvSplit = true) where T : new()
+        public static async IAsyncEnumerable<T> ImportDataAsyncEnumerable<T>(Stream stream, string[] mappedItems, char seperator = ',',
+            bool changeEuNumbersToUk = true, bool smartCsvSplit = true, Encoding encoding = null)
+            where T : new()
         {
-            var data = new List<T>();
-            using var streamReader = new StreamReader(stream, Encoding.UTF8);
+            using var streamReader = new StreamReader(stream, encoding ?? Encoding.UTF8);
             string line;
             var firstLine = true;
             while ((line = (await streamReader.ReadLineAsync().ConfigureAwait(false))) != null)
@@ -45,13 +55,11 @@ namespace tobin.CsvBasicModelGenericImporter
                         continue;
                     }
 
-                    SetObjectProperty(prop, part.Sanitize(), model);
+                    SetObjectProperty(prop, changeEuNumbersToUk ? part.SanitizeNumbers() : part, model);
                 }
 
-                data.Add(model);
+                yield return model;
             }
-
-            return data;
         }
 
         private static void SetObjectProperty(string propertyName, string value, object obj)

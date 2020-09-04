@@ -60,7 +60,7 @@ namespace tobin.GusessCsvFieldsAndtypesGen
                             continue;
                         }
 
-                        item.DataType = DeterimeTypes.DetermineTypeHelper(item.DataType, part.Sanitize());
+                        item.DataType = DeterimeTypes.DetermineTypeHelper(item.DataType, part.SanitizeNumbers());
                     }
                 }
             }
